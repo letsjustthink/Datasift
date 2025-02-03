@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill Management</title>
+    <script>
+        async function searchBills() {
+            let query = document.getElementById('search').value;
+            let response = await fetch('/search?query=' + query);
+            let data = await response.json();
+            let table = document.getElementById('billsTable');
+            table.innerHTML = '<tr><th>ID</th><th>Description</th><th>Actions</th></tr>';
+            data.forEach(bill => {
+                let row = `<tr>
+                    <td>${bill.id}</td>
+                    <td contenteditable="true" id="desc-${bill.id}">${bill.description}</td>
+                    <td>
+                        <button onclick="updateBill(${bill.id})">Update</button>
+                        <button onclick="deleteBill(${bill.id})">Delete</button>
+                    </td>
+                </tr>`;
+                table.innerHTML += row;
+            });
+        }
+
+        async function addBill() {
+            let description = document.getElementById('newDescription').value;
+            let response = await fetch('/add', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ description })
+            });
+            let data = await response.json();
+            document.getElementById('newDescription').value = '';
+            searchBills();
+        }
+
+        async function updateBill(id) {
+            let description = document.getElementById(`desc-${id}`).innerText;
+            await fetch(`/edit/${id}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ description })
+            });
+            searchBills();
+        }
+
+        async function deleteBill(id) {
+            await fetch(`/delete/${id}`, { method: 'DELETE' });
+            searchBills();
+        }
+    </script>
+</head>
+<body>
+    <h1>Bill Management</h1>
+    <input type="text" id="search" placeholder="Search Bills" onkeyup="searchBills()">
+    <br><br>
+    <input type="text" id="newDescription" placeholder="New Bill Description">
+    <button onclick="addBill()">Add Bill</button>
+    <br><br>
+    <table id="billsTable">
+        <tr><th>ID</th><th>Description</th><th>Actions</th></tr>
+        {% for bill in bills %}
+            <tr>
+                <td>{{ bill.id }}</td>
+                <td contenteditable="true" id="desc-{{ bill.id }}">{{ bill.description }}</td>
+                <td>
+                    <button onclick="updateBill({{ bill.id }})">Update</button>
+                    <button onclick="deleteBill({{ bill.id }})">Delete</button>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill Management</title>
+    <script>
+        async function searchBills() {
+            let query = document.getElementById('search').value;
+            let tracker = document.getElementById('tracker').value;
+            let sponsor = document.getElementById('sponsor').value;
+            let cosponsor = document.getElementById('cosponsor').value;
+            let url = `/search?query=${query}&tracker=${tracker}&sponsor=${sponsor}&cosponsor=${cosponsor}`;
+            let response = await fetch(url);
+            let data = await response.json();
+            let table = document.getElementById('billsTable');
+            table.innerHTML = '<tr><th>ID</th><th>Description</th><th>Tracker</th><th>Sponsors</th><th>Cosponsors</th><th>Actions</th></tr>';
+            data.forEach(bill => {
+                let row = `<tr>
+                    <td>${bill.id}</td>
+                    <td contenteditable="true" id="desc-${bill.id}">${bill.description}</td>
+                    <td contenteditable="true" id="tracker-${bill.id}">${bill.tracker}</td>
+                    <td contenteditable="true" id="sponsor-${bill.id}">${bill.sponsors}</td>
+                    <td contenteditable="true" id="cosponsor-${bill.id}">${bill.cosponsors}</td>
+                    <td>
+                        <button onclick="hideBill(${bill.id})">Hide</button>
+                        <button onclick="unhideBill(${bill.id})">Unhide</button>
+                    </td>
+                </tr>`;
+                table.innerHTML += row;
+            });
+        }
+
+        async function hideBill(id) {
+            await fetch(`/hide/${id}`, { method: 'PUT' });
+            searchBills();
+        }
+
+        async function unhideBill(id) {
+            await fetch(`/unhide/${id}`, { method: 'PUT' });
+            searchBills();
+        }
+    </script>
+</head>
+<body>
+    <h1>Bill Management</h1>
+    <input type="text" id="search" placeholder="Search Bills" onkeyup="searchBills()">
+    <select id="tracker" onchange="searchBills()">
+        <option value="">Filter by Tracker</option>
+        <option value="Passed">Passed</option>
+        <option value="Pending">Pending</option>
+        <option value="Failed">Failed</option>
+    </select>
+    <input type="text" id="sponsor" placeholder="Filter by Sponsor" onkeyup="searchBills()">
+    <input type="text" id="cosponsor" placeholder="Filter by Cosponsor" onkeyup="searchBills()">
+    <br><br>
+    <table id="billsTable">
+        <tr><th>ID</th><th>Description</th><th>Tracker</th><th>Sponsors</th><th>Cosponsors</th><th>Actions</th></tr>
+        {% for bill in bills %}
+            <tr>
+                <td>{{ bill.id }}</td>
+                <td contenteditable="true" id="desc-{{ bill.id }}">{{ bill.description }}</td>
+                <td contenteditable="true" id="tracker-{{ bill.id }}">{{ bill.tracker }}</td>
+                <td contenteditable="true" id="sponsor-{{ bill.id }}">{{ bill.sponsors }}</td>
+                <td contenteditable="true" id="cosponsor-{{ bill.id }}">{{ bill.cosponsors }}</td>
+                <td>
+                    <button onclick="hideBill({{ bill.id }})">Hide</button>
+                    <button onclick="unhideBill({{ bill.id }})">Unhide</button>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
